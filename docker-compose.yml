@@ -1,0 +1,9 @@
+services:
+  bot-if-unja:
+    build: .
+    container_name: bot-discord-if-unja
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data

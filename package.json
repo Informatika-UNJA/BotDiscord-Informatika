@@ -1,0 +1,34 @@
+{
+  "name": "bot-discord-informatika-unja",
+  "version": "1.0.0",
+  "description": "Bot Discord full-stack untuk server Informatika Universitas Jambi — verifikasi mahasiswa berbasis database, pemilihan komting otomatis, dan auto welcomer/leaver bergaya embed.",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "deploy": "node src/deploy-commands.js",
+    "deploy:global": "node src/deploy-commands.js --global"
+  },
+  "keywords": [
+    "discord.js",
+    "discord-bot",
+    "informatika",
+    "universitas-jambi",
+    "verifikasi-mahasiswa"
+  ],
+  "author": "Himpunan Mahasiswa Informatika UNJA",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "csv-parse": "^7.0.3",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true
+  }
+}
