@@ -1,4 +1,4 @@
-# 🤖 Bot Discord Informatika — Universitas Jambi
+# Multifunctional Bot Specially for Jambi University Discord Community.
 
 Bot Discord full-stack untuk server **Informatika Universitas Jambi**, dibangun dengan [discord.js v14](https://discord.js.org/) dan database **SQLite**. Bot ini menangani tiga kebutuhan inti server:
 
