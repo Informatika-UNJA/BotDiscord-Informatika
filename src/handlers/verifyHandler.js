@@ -7,7 +7,7 @@ const {
   TextInputStyle,
 } = require('discord.js');
 const { VERIFY_MODAL, VERIFY_RESULT } = require('../config/messages');
-const { isValidNamaFormat, isValidNimFormat, normalize } = require('../utils/validators');
+const { isValidNamaInput, isValidNimFormat, normalize, isSameName } = require('../utils/validators');
 const { studentsRepo, verifiedRepo, roleMapRepo, settingsRepo } = require('../database/repositories');
 const {
   buildVerifyPanelEmbed,
@@ -15,6 +15,7 @@ const {
   buildVerifyInfoEmbed,
   buildVerifySuccessEmbed,
 } = require('../utils/embeds');
+const { resolveNetralRole } = require('../utils/roles');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 
@@ -77,8 +78,8 @@ async function handleVerifyModalSubmit(interaction) {
   const nama = normalize(namaRaw);
   const nim = normalize(nimRaw);
 
-  // 1) Validasi format penulisan
-  if (!isValidNamaFormat(nama) || !isValidNimFormat(nim)) {
+  // 1) Validasi format penulisan (nama toleran soal kapital; NIM tetap wajib HURUF KAPITAL)
+  if (!isValidNamaInput(nama) || !isValidNimFormat(nim)) {
     return interaction.editReply({
       embeds: [buildVerifyErrorEmbed(VERIFY_RESULT.invalidFormatTitle, VERIFY_RESULT.invalidFormatDesc)],
     });
@@ -107,8 +108,9 @@ async function handleVerifyModalSubmit(interaction) {
     });
   }
 
-  // 4) Cocokkan nama (case-insensitive, karena kapitalisasi sudah divalidasi di langkah 1)
-  if (student.nama_lengkap.trim().toLowerCase() !== nama.toLowerCase()) {
+  // 4) Cocokkan nama secara toleran (lihat sanitizeName di utils/validators.js):
+  //    tidak sensitif kapital, abaikan tanda hubung/titik/apostrof, dan rapikan spasi.
+  if (!isSameName(student.nama_lengkap, nama)) {
     return interaction.editReply({
       embeds: [buildVerifyErrorEmbed(VERIFY_RESULT.mismatchTitle, VERIFY_RESULT.mismatchDesc)],
     });
@@ -144,6 +146,17 @@ async function handleVerifyModalSubmit(interaction) {
       for (const id of roleIdsToAssign) {
         const role = interaction.guild.roles.cache.get(id);
         if (role) roleMentions.push(`<@&${id}>`);
+      }
+
+      // Role-role baru sudah masuk -> cabut role default "Netral" (best-effort, tidak menggagalkan verifikasi).
+      // Dilewati kalau Netral ternyata termasuk role yang memang harus diberikan.
+      try {
+        const netralRole = resolveNetralRole(interaction.guild);
+        if (netralRole && !roleIdsToAssign.has(netralRole.id) && interaction.member.roles.cache.has(netralRole.id)) {
+          await interaction.member.roles.remove(netralRole.id, 'Verifikasi berhasil — role Netral dicabut');
+        }
+      } catch (err) {
+        logger.warn('Gagal mencabut role Netral:', err.message);
       }
     } catch (err) {
       logger.warn('Gagal memberikan role verifikasi:', err.message);

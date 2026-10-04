@@ -11,6 +11,11 @@ const config = {
 
   verifiedRoleId: process.env.VERIFIED_ROLE_ID || null,
 
+  // Role default "Netral" — otomatis DICABUT dari member setelah verifikasi berhasil.
+  // Kalau ID kosong, sistem fallback mencocokkan role bernama persis "Netral" (case-insensitive).
+  netralRoleId: process.env.NETRAL_ROLE_ID || null,
+  netralRoleNameFallback: 'Netral',
+
   databasePath: process.env.DATABASE_PATH || './data/bot.sqlite',
 };
 

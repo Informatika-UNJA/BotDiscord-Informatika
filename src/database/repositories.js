@@ -78,7 +78,14 @@ const verifiedRepo = {
   },
 
   getByNim(nim) {
-    return db.prepare('SELECT * FROM verified_members WHERE nim = ?').get(nim);
+    return db
+      .prepare(
+        `SELECT vm.*, s.nama_lengkap, s.angkatan, s.jabatan
+         FROM verified_members vm
+         JOIN students s ON s.nim = vm.nim
+         WHERE vm.nim = ?`
+      )
+      .get(nim);
   },
 
   add({ discordId, nim, guildId }) {
@@ -88,6 +95,10 @@ const verifiedRepo = {
          VALUES (?, ?, ?)`
       )
       .run(discordId, nim, guildId);
+  },
+
+  removeByDiscordId(discordId) {
+    return db.prepare('DELETE FROM verified_members WHERE discord_id = ?').run(discordId);
   },
 };
 

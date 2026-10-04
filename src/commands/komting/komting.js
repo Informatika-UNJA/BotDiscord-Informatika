@@ -147,12 +147,34 @@ async function handleSetup(interaction) {
     });
 
     const createdChannels = [];
+
+    // Dua channel tetap — selalu dibuat, tidak dihitung dari opsi "jumlah"
+    const channelUtama = await interaction.guild.channels.create({
+      name: KOMTING.fixedMainChannelName,
+      type: ChannelType.GuildVoice,
+      parent: category.id,
+      permissionOverwrites,
+      position: 0,
+    });
+    createdChannels.push(channelUtama);
+
+    const ruangTunggu = await interaction.guild.channels.create({
+      name: KOMTING.fixedWaitingRoomName,
+      type: ChannelType.GuildVoice,
+      parent: category.id,
+      permissionOverwrites,
+      position: 1,
+    });
+    createdChannels.push(ruangTunggu);
+
+    // Voice channel bernomor sesuai input admin
     for (let i = 1; i <= jumlah; i += 1) {
       const voiceChannel = await interaction.guild.channels.create({
         name: `${KOMTING.channelPrefix} ${i}`,
         type: ChannelType.GuildVoice,
         parent: category.id,
         permissionOverwrites,
+        position: 1 + i,
       });
       createdChannels.push(voiceChannel);
     }
@@ -169,6 +191,7 @@ async function handleSetup(interaction) {
       embeds: [
         buildKomtingSuccessEmbed({
           jumlah,
+          total: createdChannels.length,
           label,
           channelMentions: createdChannels.map((c) => `${c}`),
         }),

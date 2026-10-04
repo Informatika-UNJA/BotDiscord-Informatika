@@ -1,4 +1,4 @@
-# Multifunctional Bot Specially for Jambi University Discord Community.
+# 🤖 Bot Discord Informatika — Universitas Jambi
 
 Bot Discord full-stack untuk server **Informatika Universitas Jambi**, dibangun dengan [discord.js v14](https://discord.js.org/) dan database **SQLite**. Bot ini menangani tiga kebutuhan inti server:
 
@@ -112,10 +112,13 @@ CLIENT_ID=isi_application_id
 GUILD_ID=isi_id_server_discord_kamu   # aktifkan Developer Mode di Discord untuk copy ID
 ADMIN_ROLE_ID=                        # opsional, isi ID role "ADMIN IF" (lihat catatan di bawah)
 VERIFIED_ROLE_ID=                     # opsional, bisa diatur belakangan lewat command
+NETRAL_ROLE_ID=                       # opsional, ID role "Netral" yang dicabut setelah verifikasi (fallback: role bernama "Netral")
 DATABASE_PATH=./data/bot.sqlite
 ```
 
 > ⚠️ **Catatan penting soal role admin:** Perintah `/mahasiswa`, `/role-mapping`, `/pengaturan`, dan `/komting` hanya bisa dijalankan anggota dengan role **`ADMIN IF`**. Kamu bisa mengisi `ADMIN_ROLE_ID` di `.env`, **atau** cukup pastikan ada role bernama persis `ADMIN IF` di server — bot akan otomatis mendeteksinya sebagai fallback. ID lebih diprioritaskan & lebih aman (nama role bisa berubah, ID tidak).
+
+> 🧹 **Role Netral:** setelah verifikasi berhasil dan role baru sudah diberikan, bot otomatis **mencabut role `Netral`** dari anggota tersebut. Role dicari lewat `NETRAL_ROLE_ID` di `.env`, atau otomatis lewat nama role persis `Netral` kalau ID dikosongkan. Pastikan role bot berada **di atas** role `Netral` di *Server Settings → Roles*.
 
 ### 5. Deploy Slash Command
 ```bash
@@ -145,7 +148,26 @@ Database SQLite otomatis tersimpan persisten di folder `./data` lewat volume mou
 | Command | Akses | Deskripsi |
 |---|---|---|
 | `/verifikasi setup [channel]` | ADMIN IF | Memasang panel embed + tombol verifikasi di channel `#verify` (atau channel yang dipilih) |
+| `/verifikasi hapus [user] [nim] [cabut_role]` | ADMIN IF | **Melepas** status verifikasi seorang anggota — akun Discord tersebut jadi belum-terverifikasi lagi |
 | `/verify` | Semua anggota | Alternatif cepat membuka form verifikasi tanpa lewat panel |
+
+**Soal `/verifikasi hapus` — kapan dipakai:**
+Kalau ada anggota yang sudah terverifikasi (NIM & nama sudah ke-link ke akun Discord-nya) lalu menghubungi kamu sebagai admin untuk minta di-*unlink* — misalnya salah pencet saat verifikasi, ganti akun Discord, atau NIM-nya perlu dipindah ke akun lain — pakai command ini:
+
+```
+/verifikasi hapus user:@NamaDiscord
+```
+atau kalau orangnya sudah tidak ada di server / kamu cuma tahu NIM-nya:
+```
+/verifikasi hapus nim:G1A024001
+```
+
+Yang terjadi setelah command ini dijalankan:
+- Baris di tabel `verified_members` (link akun Discord ↔ NIM) **dihapus**.
+- Role yang tadinya diberikan otomatis (role terverifikasi, role angkatan, role jabatan) **ikut dicabut** dari member tersebut — kalau opsi `cabut_role` dibiarkan default (`true`) dan membernya masih ada di server.
+- **Data mahasiswa di tabel `students` TIDAK ikut terhapus.** NIM & nama tetap ada di database, jadi orang tersebut (dari akun Discord manapun) bisa melakukan `/verify` ulang kapan saja dan ter-link ke NIM itu lagi dari awal.
+
+> 💡 Bedanya dengan `/mahasiswa hapus nim:...`: command itu menghapus **data mahasiswanya sekalian** dari database (baris di `students`), yang otomatis ikut menghapus link verifikasinya juga (lewat `ON DELETE CASCADE`) — tapi NIM itu jadi tidak bisa dipakai verifikasi lagi sampai kamu tambahkan datanya kembali. Pakai `/mahasiswa hapus` hanya kalau memang datanya sudah tidak valid lagi (misal NIM salah input, mahasiswa DO, dsb), bukan sekadar untuk unlink akun.
 
 **Langkah setup pertama kali:**
 1. Tambahkan dulu data mahasiswa ke database (lihat bagian *Kelola Data Mahasiswa* di bawah).
@@ -200,13 +222,18 @@ G1A023015,Bagus Setiawan,2023,
 ```
 /komting setup jumlah:3 akses:@Angkatan24 label:"Pemilihan Komting 2024"
 ```
-- **`jumlah`** — berapa voice channel yang dibuat (1–20).
+- **`jumlah`** — berapa voice channel **bernomor** yang dibuat (1–20), di luar 2 channel tetap di bawah.
 - **`akses`** — role yang boleh melihat & join channel (misalnya role angkatan yang sedang memilih).
 - **`label`** *(opsional)* — nama sesi, dipakai sebagai nama kategori.
 - **`tambahan`** *(opsional)* — mention/ID anggota lain (misalnya panitia) yang juga diberi akses, contoh: `@Panitia1 @Panitia2`.
 - **`terlihat`** *(opsional, default `false`)* — jika `true`, channel tetap kelihatan di daftar tapi hanya yang berhak yang bisa connect. Default-nya channel disembunyikan total dari yang tidak berhak.
 
-Bot otomatis membuat 1 **kategori** + voice channel sejumlah `jumlah` di dalamnya, dengan permission privat.
+Bot otomatis membuat 1 **kategori** berisi:
+1. 🔒 **Pemilihan Komting & Wakomting** — channel tetap, selalu dibuat di setiap sesi (nama ini bisa diubah di `KOMTING.fixedMainChannelName` pada `src/config/messages.js`).
+2. 🔒 **Ruang Tunggu** — channel tetap, selalu dibuat di setiap sesi (`KOMTING.fixedWaitingRoomName`).
+3. **Ruang 1, Ruang 2, ... Ruang N** — sejumlah `jumlah` yang kamu input.
+
+Semua channel di atas berbagi permission yang sama (privat, hanya `akses` role + admin + `tambahan` yang bisa masuk), dan seluruhnya otomatis ikut terhapus saat `/komting tutup`.
 
 Setelah selesai:
 ```
@@ -226,7 +253,24 @@ Setelah selesai:
 | `/pengaturan admin-role role:@ADMIN-IF` | Override role admin bot (alternatif dari `.env`) |
 | `/pengaturan lihat` | Menampilkan seluruh konfigurasi server saat ini |
 
-### 6️⃣ Auto Welcomer & Leaver
+### 6️⃣ Pengumuman & Polling
+
+| Command | Deskripsi |
+|---|---|
+| `/pengumuman kirim judul pesan [channel] [gambar] [tag_everyone]` | Kirim pengumuman bergaya embed (title + field), gambar opsional |
+| `/pengumuman polling pertanyaan opsi1 opsi2 [opsi3-5] [channel] [durasi_jam] [multi_pilih] [tag_everyone]` | Membuat **polling native Discord** (bukan reaction-based) |
+
+- Setiap embed pengumuman otomatis memakai identitas **"Informatika - Universitas Jambi"** sebagai author dan footer **"Pusat Informasi Informatika Universitas Jambi"** — konsisten setiap kali dikirim, tinggal isi judul & isi pesannya.
+- **`gambar`** dilampirkan langsung seperti upload file di chat biasa (drag & drop di kolom opsi Discord), tidak perlu link gambar.
+- **`tag_everyone`** default `false` — embed/pesan terkirim **tanpa** mem-ping siapa pun. Set `true` hanya kalau memang mau notifikasi `@everyone`.
+- Polling memakai fitur **Poll native Discord** (bukan reaksi emoji manual): jawaban otomatis diberi label 🇦 🇧 🇨 🇩 🇪, dan hasilnya bisa dilihat real-time langsung di UI Discord.
+- **`durasi_jam`** default 24 jam, maksimal 720 jam (30 hari). **`multi_pilih`** default `false` (1 orang 1 pilihan).
+
+> 🔒 Sama seperti `/komting`, seluruh subcommand `/pengumuman` **khusus ADMIN IF** — supaya kemampuan nge-tag `@everyone` tidak disalahgunakan. Kalau kamu ingin peran lain (misal "Pengurus Himpunan") juga bisa memakainya tanpa menyentuh kode, atur lewat **Server Settings → Integrations → (nama bot) → command `pengumuman`** dan tambahkan role yang diizinkan di situ.
+>
+> ⚠️ Supaya tag `@everyone` benar-benar mengirim notifikasi, pastikan bot punya izin **"Mention @everyone, @here, and All Roles"** di server (Server Settings → Roles → role bot).
+
+### 7️⃣ Auto Welcomer & Leaver
 Begitu `/pengaturan welcome-channel` diatur, bot otomatis mengirim embed berikut:
 
 - **Saat member baru join** — judul *"Selamat datang di discord Informatika - Universitas Jambi"*, dengan foto profil member sebagai thumbnail dan jumlah member saat ini di footer.

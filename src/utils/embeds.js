@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { COLORS, WELCOME, LEAVE, VERIFY_PANEL, VERIFY_RESULT, KOMTING } = require('../config/messages');
+const { COLORS, WELCOME, LEAVE, VERIFY_PANEL, VERIFY_RESULT, KOMTING, ANNOUNCEMENT } = require('../config/messages');
 
 function fill(template, vars) {
   return Object.entries(vars).reduce(
@@ -82,11 +82,11 @@ function buildVerifySuccessEmbed({ nama, nim, angkatan, jabatan, roleMentions })
 }
 
 /* ---------------------- KOMTING ---------------------- */
-function buildKomtingSuccessEmbed({ jumlah, label, channelMentions }) {
+function buildKomtingSuccessEmbed({ jumlah, total, label, channelMentions }) {
   return new EmbedBuilder()
     .setColor(COLORS.success)
     .setTitle(KOMTING.successTitle)
-    .setDescription(fill(KOMTING.successDescTemplate, { jumlah, label }))
+    .setDescription(fill(KOMTING.successDescTemplate, { jumlah, total, label }))
     .addFields({ name: 'Voice Channel', value: channelMentions.join('\n') })
     .setTimestamp();
 }
@@ -107,6 +107,20 @@ function buildKomtingNoSessionEmbed() {
     .setTimestamp();
 }
 
+/* ---------------------- PENGUMUMAN ---------------------- */
+function buildAnnouncementEmbed({ judul, pesan, guild, imageUrl }) {
+  const embed = new EmbedBuilder()
+    .setColor(ANNOUNCEMENT.color)
+    .setAuthor({ name: ANNOUNCEMENT.authorName, iconURL: guild?.iconURL() || undefined })
+    .setTitle(judul)
+    .addFields({ name: ANNOUNCEMENT.fieldName, value: pesan })
+    .setFooter({ text: ANNOUNCEMENT.footerText, iconURL: guild?.iconURL() || undefined })
+    .setTimestamp();
+
+  if (imageUrl) embed.setImage(imageUrl);
+  return embed;
+}
+
 module.exports = {
   buildWelcomeEmbed,
   buildLeaveEmbed,
@@ -117,4 +131,5 @@ module.exports = {
   buildKomtingSuccessEmbed,
   buildKomtingCloseEmbed,
   buildKomtingNoSessionEmbed,
+  buildAnnouncementEmbed,
 };

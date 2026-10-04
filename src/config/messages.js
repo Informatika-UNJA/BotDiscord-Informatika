@@ -56,7 +56,7 @@ const VERIFY_RESULT = {
   invalidFormatTitle: '❌ Format Data Tidak Sesuai',
   invalidFormatDesc:
     'Data yang kamu masukkan tidak memenuhi ketentuan penulisan.\n\n' +
-    '• **Nama Lengkap** harus memakai Huruf Kapital di setiap awal kata (contoh: `Muhammad Rizky Pratama`).\n' +
+    '• **Nama Lengkap** hanya boleh berisi huruf, spasi, titik (.), tanda hubung (-), dan apostrof (contoh: `Muhammad Rizky Pratama`).\n' +
     '• **NIM** harus ditulis dengan **HURUF KAPITAL** semua (contoh: `F1E323001`).\n\n' +
     'Silakan klik tombol verifikasi kembali dan perbaiki data kamu.',
 
@@ -87,15 +87,15 @@ const VERIFY_RESULT = {
 //  AUTO WELCOMER & LEAVER
 // ---------------------------------------------------------
 const WELCOME = {
-  title: 'Selamat datang di discord community Informatika - Universitas Jambi',
-  field: 'Semoga kamu betah ya di discord server ini.',
-  descriptionTemplate: 'Halo {member}, terima kasih sudah bergabung! 🎉',
+  title: 'Welcome to Informatika UNJA! 🎉',
+  field: 'Senang melihat kamu bergabung di sini. Semoga betah, kenalan dengan teman-teman baru, dan nikmati komunitasnya',
+  descriptionTemplate: 'Halo {member}, terima kasih sudah bergabung!',
   footerTemplate: 'Anggota ke {count} • Informatika UNJA',
 };
 
 const LEAVE = {
-  title: 'Sampai jumpa dari discord community Informatika - Universitas Jambi',
-  field: 'Hati hati di jalan, semoga sukses selalu.',
+  title: 'Goodbye, Thanks for staying by! 👋',
+  field: 'Terima kasih sudah menjadi bagian dari komunitas kami. Semoga sukses selalu di mana pun kamu berada!',
   descriptionTemplate: '**{tag}** telah meninggalkan server. 👋',
   footerTemplate: 'Kini berjumlah {count} anggota • Informatika UNJA',
 };
@@ -106,14 +106,30 @@ const LEAVE = {
 const KOMTING = {
   categoryPrefix: '🗳️',
   channelPrefix: 'Ruang',
+  // Dua voice channel ini SELALU dibuat di setiap sesi, di luar jumlah "Ruang" yang diinput admin.
+  fixedMainChannelName: 'Pemilihan Komting & Wakomting',
+  fixedWaitingRoomName: 'Ruang Tunggu',
   successTitle: '✅ Voice Channel Pemilihan Komting Siap',
   successDescTemplate:
-    'Berhasil membuat **{jumlah} voice channel** untuk **{label}**.\n' +
+    'Berhasil membuat **{total} voice channel** untuk **{label}** ' +
+    '({jumlah} ruang pemilihan + 2 channel tetap).\n' +
     'Hanya anggota dengan akses yang ditentukan yang dapat melihat & bergabung ke channel ini.',
   closeSuccessTitle: '🗑️ Sesi Pemilihan Komting Ditutup',
   closeSuccessDesc: 'Seluruh voice channel & kategori pada sesi ini telah dihapus.',
   noSessionTitle: 'ℹ️ Tidak Ada Sesi Aktif',
   noSessionDesc: 'Tidak ditemukan sesi pemilihan komting yang masih terbuka di server ini.',
+};
+
+// ---------------------------------------------------------
+//  PENGUMUMAN (announcement & polling)
+// ---------------------------------------------------------
+const ANNOUNCEMENT = {
+  authorName: 'Informatika - Universitas Jambi',
+  footerText: 'Pusat Informasi Informatika Universitas Jambi',
+  fieldName: '📢 Pengumuman',
+  color: COLORS.primary,
+  // Emoji default untuk opsi polling 1-5, tampil ala pilihan ganda ujian ✨
+  pollDefaultEmojis: ['🇦', '🇧', '🇨', '🇩', '🇪'],
 };
 
 module.exports = {
@@ -125,4 +141,5 @@ module.exports = {
   WELCOME,
   LEAVE,
   KOMTING,
+  ANNOUNCEMENT,
 };
